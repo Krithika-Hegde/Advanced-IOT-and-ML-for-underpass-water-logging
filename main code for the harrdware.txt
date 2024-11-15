@@ -1,0 +1,289 @@
+#include<SoftwareSerial.h>
+SoftwareSerial Serial1(6,7);
+
+#include<LiquidCrystal.h>
+const int rs=12,en=13,d4=11,d5=10,d6=9,d7=8;
+LiquidCrystal lcd(rs,en,d4,d5,d6,d7);
+
+
+#define trigger 16
+#define echo 17
+
+float distance;
+int dist;
+
+int m1=2;
+int m2=3;
+int m3=4;
+int m4=5;
+
+int ladder1=18;
+int ladder2=19;
+int relay=15;
+
+int a=0,m=1;
+int b=0,n=1;
+char ch;
+
+
+void WATER_LEVEL();
+void GATE_CLOSE();
+void GATE_OPEN();
+void RAIN_CHECK();
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  Serial1.begin(9600);
+  lcd.begin(16,2);
+  pinMode(trigger,OUTPUT);
+  pinMode(echo,INPUT);
+//  pinMode(buzzer,OUTPUT);
+  pinMode(m1,OUTPUT);
+  pinMode(m2,OUTPUT);
+  pinMode(m3,OUTPUT);
+  pinMode(m4,OUTPUT);
+  pinMode(relay,OUTPUT);
+  pinMode(ladder1,OUTPUT);
+  pinMode(ladder2,OUTPUT);
+  
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("UNDERWATER WATER");
+  lcd.setCursor(0,1);
+  lcd.print("LOGGING PROBLEM");
+  delay(1000);
+  digitalWrite(relay,LOW);
+  digitalWrite(m1,LOW);
+  digitalWrite(m2,LOW);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,LOW);
+  digitalWrite(ladder1,LOW);
+  digitalWrite(ladder2,LOW);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  WATER_LEVEL();
+  RAIN_CHECK();
+  
+
+}
+
+void WATER_LEVEL()
+{
+  digitalWrite(trigger,LOW);
+  delayMicroseconds(5);
+  digitalWrite(trigger,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigger,HIGH);
+  distance=pulseIn(echo,HIGH);
+  dist=distance*0.034/2;
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Distance=");
+  lcd.setCursor(0,1);
+  Serial.println(dist);
+  lcd.print(dist);
+  delay(1000);
+
+  if(m==1&&dist>4)
+        {  
+          a=1;
+      
+           digitalWrite(m1,LOW);
+           digitalWrite(m2,LOW);
+           digitalWrite(m3,LOW);
+           digitalWrite(m4,LOW);
+//           Serial.println("$NO WATER#");
+                    
+           
+        }
+
+        else if(a==1&&dist<5)
+          {
+            m=0;
+            a=0;
+////             digitalWrite(buzzer,HIGH);
+//            delay(1000);
+//            digitalWrite(buzzer,LOW);
+//         
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("WATER LEVEL");
+            lcd.setCursor(0,1);
+            lcd.print("  HIGH  ");
+            Serial.println("WATER LEVEL HIGH");
+            delay(1000);
+        
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("  NO VEHICLES  ");
+            lcd.setCursor(0,1);
+            lcd.print("  CAN PASS  ");
+            Serial.println("NO VEHICLES CAN PASS");
+            digitalWrite(relay,HIGH);
+            delay(1500);
+          Serial.println("$WATER LEVEL MORE GATES CLOSING#");
+          Serial1.println("$WATER LEVEL MORE GATES CLOSING#");
+           
+           GATE_CLOSE();
+           
+           HUMAN_DETECT();
+          delay(5000);
+          digitalWrite(relay,LOW);
+         
+        }
+         else if(m==0&&dist>5)
+          { 
+            a=1;
+            m=1;
+            Serial.println("$GATES IS OPENING#");
+            GATE_OPEN();
+            delay(1000);
+            }
+            
+
+     if(dist<=8 && dist>=5)
+
+  {   
+//           a=1;
+//            m=1;
+//    digitalWrite(buzzer,HIGH);
+    delay(1000);
+//    digitalWrite(buzzer,LOW);
+ 
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("WATER LEVEL");
+    lcd.setCursor(0,1);
+    lcd.print("  MODERATE  ");
+    Serial.println("WATER LEVEL MODERATE");
+    delay(1000);
+
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("   ONLY CARS   ");
+    lcd.setCursor(0,1);
+    lcd.print("  CAN PASS  ");
+    Serial.println("ONLY CARS CAN PASS");
+    delay(1500);
+
+  }
+    if(dist<=12 && dist>9)
+  { 
+
+//    digitalWrite(buzzer,HIGH);
+    delay(1000);
+//    digitalWrite(buzzer,LOW);
+ 
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("WATER LEVEL");
+    lcd.setCursor(0,1);
+    lcd.print("  LOW  ");
+    Serial.println("WATER LEVEL LOW");
+    delay(1000);
+
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("VEHICLES CAN PAS");
+    lcd.setCursor(0,1);
+    lcd.print("-S NO PEDESTRAINS");
+    Serial.println("ONLY VEHICLES CAN PASS");
+    delay(1500);
+
+  }
+ 
+}
+
+void RAIN_CHECK()
+{
+  int rainval=analogRead(A0);
+  Serial.print("RAIN:");
+  Serial.println(rainval);
+  delay(1000);
+  if(rainval<500)
+  {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("RAINFALL IS MORE");
+    Serial1.println("$RAINFALL IS MORE#");
+    
+    delay(1000);
+  }
+}
+
+void GATE_OPEN()
+{
+  digitalWrite(m1,LOW);
+  digitalWrite(m2,HIGH);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,HIGH);
+  delay(500);
+  digitalWrite(m1,LOW);
+  digitalWrite(m2,LOW);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,LOW);
+  delay(500);
+  
+}
+
+void GATE_CLOSE()
+{
+
+  digitalWrite(m1,HIGH);
+  digitalWrite(m2,LOW);
+  digitalWrite(m3,HIGH);
+  digitalWrite(m4,LOW);
+  delay(500);
+  digitalWrite(m1,LOW);
+  digitalWrite(m2,LOW);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,LOW);
+  delay(500);
+}
+
+void HUMAN_DETECT()
+{
+  if(Serial.available()>0)
+  {
+    ch=Serial.read();
+    Serial.println(ch);
+    delay(500);
+    if(ch=='A')
+    {
+      Serial.println("$HUMAN DETECTED INSIDE UNDERPASS#");
+     
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("HUMAN DETECTED");
+      lcd.setCursor(0,1);
+      lcd.print("INSIDE UNDERPASS");
+      LADDER_DOWN();
+      Serial1.println("$HUMAN DETECTED INSIDE UNDERPASS#");
+      delay(5000);
+      LADDER_UP();
+
+}
+}
+}
+
+void LADDER_UP()
+{
+  digitalWrite(ladder1,HIGH);
+  digitalWrite(ladder2,LOW);
+  delay(1500);
+  digitalWrite(ladder1,LOW);
+  digitalWrite(ladder2,LOW);
+  delay(1500);
+}
+void LADDER_DOWN()
+{
+  digitalWrite(ladder1,LOW);
+  digitalWrite(ladder2,HIGH);
+  delay(1500);
+  digitalWrite(ladder1,LOW);
+  digitalWrite(ladder2,LOW);
+  delay(1500);
+}
